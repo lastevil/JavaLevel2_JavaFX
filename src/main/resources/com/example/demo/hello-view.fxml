@@ -16,8 +16,8 @@
       fx:controller="com.example.demo.HelloController" spacing="5">
     <MenuBar>
         <Menu text="File">
+            <MenuItem text="Logout" onAction="#menuLogout"/>
             <MenuItem text="Exit" onAction="#menuExit"/>
-            <MenuItem text="Hard Exit" onAction="#menuHardExit"/>
         </Menu>
     </MenuBar>
     <padding>
