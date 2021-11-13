@@ -3,12 +3,13 @@ package com.example.demo;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.stage.WindowEvent;
 
 
 public class HelloController {
     private  Client client;
-    private final String EXIT = "/end";
+    private final String END = "/end";
+    private static final String LOGOUT = "/logout";
+    private static boolean logout;
 
     public HelloController() {
         client = new Client(this);
@@ -21,33 +22,37 @@ public class HelloController {
 
     @FXML
     private void ButtonClick(ActionEvent actionEvent) {
+        textArea.setStyle("-fx-font-size: 12px; -fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick;");
         String mess = textField.getText();
         if (!mess.isEmpty()){
-            textArea.setStyle("-fx-font-size: 12px; -fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick;");
-            textArea.appendText(mess+"\n");
             client.sendMessage(mess);
             textField.clear();
             textField.focusedProperty();
         }
     }
     public void getMessage(String a){
-        textArea.appendText("Сервер: "+a+"\n");
-        if (a.equals(EXIT)){
-            System.exit(0);
-        }
+        textArea.appendText(a+"\n");
     }
+
     @FXML
     private void menuExit(ActionEvent actionEvent) {
-        client.sendMessage(EXIT);
-        System.exit(0);
+        exitButtonAction();
     }
 
     public void exitButtonAction(){
-        client.sendMessage(EXIT);
+        //if (!logout){
+        if (client.connectedCheck()){
+            client.sendMessage(END);
+        }
+        if (client.connectedCheck()){
+            client.sendMessage(END);
+        }
+    //    }
         System.exit(0);
     }
-//Добавил для завершения работы при отключеном сервере
-    public void menuHardExit(ActionEvent actionEvent) {
-        System.exit(-1);
+
+    public void menuLogout(ActionEvent actionEvent) {
+        client.sendMessage(LOGOUT);
+       // logout=true;
     }
 }

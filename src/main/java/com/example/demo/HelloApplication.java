@@ -18,7 +18,6 @@ public class HelloApplication extends Application {
         HelloController controller = fxmlLoader.getController();
         stage.setOnCloseRequest(event -> {
             controller.exitButtonAction();
-            System.out.println("Stage is closing");
         });
     }
 

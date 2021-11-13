@@ -11,6 +11,7 @@ public class Client {
 
 
 
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
@@ -36,7 +37,6 @@ public class Client {
                     while (true) {
                         String strFromServer = in.readUTF();
                         if (strFromServer.equalsIgnoreCase("/end")) {
-                            controller.getMessage("/end");
                             break;
                         }
                         controller.getMessage(strFromServer);
@@ -44,7 +44,6 @@ public class Client {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            closeConnection();
             }
         }).start();
     }
@@ -56,28 +55,10 @@ public class Client {
             e.printStackTrace();
         }
     }
-
-    public void closeConnection(){
-        if (in != null){
-            try {
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public boolean connectedCheck(){
+        if(socket != null && out != null && in != null){
+                return true;
         }
-        if(socket !=null){
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if (out != null){
-            try {
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        return false;
     }
 }
