@@ -15,6 +15,11 @@ public class HelloApplication extends Application {
         stage.setTitle("Test chat");
         stage.setScene(scene);
         stage.show();
+        HelloController controller = fxmlLoader.getController();
+        stage.setOnCloseRequest(event -> {
+            controller.exitButtonAction();
+            System.out.println("Stage is closing");
+        });
     }
 
     public static void main(String[] args) {
