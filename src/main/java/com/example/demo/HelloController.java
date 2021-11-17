@@ -1,53 +1,84 @@
 package com.example.demo;
 
+import com.example.demo.constant.ConstantsMess;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.stage.WindowEvent;
+import javafx.scene.layout.HBox;
 
 
-public class HelloController {
+
+public class HelloController extends ConstantsMess {
+
     private  Client client;
-    private final String EXIT = "/end";
 
     public HelloController() {
         client = new Client(this);
     }
-    
+    @FXML
+    public HBox chatSendForm;
+    @FXML
+    public HBox loginForm;
+    @FXML
+    public HBox chatForm;
+    @FXML
+    private TextField textFieldLogin;
+    @FXML
+    private TextField textFieldPassword;
+    @FXML
+    public ComboBox comboBox;
     @FXML
     private TextArea textArea;
     @FXML
     private TextField textField;
 
+
+
     @FXML
-    private void ButtonClick(ActionEvent actionEvent) {
+    private void buttonClick(ActionEvent actionEvent) {
+        textArea.setStyle("-fx-font-size: 12px; -fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick;");
         String mess = textField.getText();
         if (!mess.isEmpty()){
-            textArea.setStyle("-fx-font-size: 12px; -fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick;");
-            textArea.appendText(mess+"\n");
-            client.sendMessage(mess);
+            if(comboBox.getValue().toString().equals(ALL)){
+            client.sendMessage(ALL+" "+mess);
+            }
+            else {
+                client.sendMessage(TO+" "+comboBox.getValue().toString()+" "+mess);
+            }
             textField.clear();
             textField.focusedProperty();
         }
     }
+
     public void getMessage(String a){
-        textArea.appendText("Сервер: "+a+"\n");
-        if (a.equals(EXIT)){
-            System.exit(0);
-        }
+        textArea.appendText(a+"\n");
     }
+
     @FXML
     private void menuExit(ActionEvent actionEvent) {
-        client.sendMessage(EXIT);
-        System.exit(0);
+        exitButtonAction();
     }
 
     public void exitButtonAction(){
-        client.sendMessage(EXIT);
+        //if (!logout){
+        if (client.connectedCheck()){
+            client.sendMessage(END);
+        }
+        if (client.connectedCheck()){
+            client.sendMessage(END);
+        }
+    //    }
         System.exit(0);
     }
-//Добавил для завершения работы при отключеном сервере
-    public void menuHardExit(ActionEvent actionEvent) {
-        System.exit(-1);
+
+    public void menuLogout(ActionEvent actionEvent) {
+        client.sendMessage(LOGOUT);
+        loginForm.setDisable(false);
+        chatForm.setDisable(true);
+        chatSendForm.setVisible(false);
+        comboBox.setValue(null);//Не смог обойти при повторном логиине...
+    }
+    public void buttonLogin(ActionEvent actionEvent) {
+        client.sendMessage(AUTH+" "+textFieldLogin.getText()+" "+textFieldPassword.getText());
     }
 }

@@ -11,14 +11,14 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
+        Scene scene = new Scene(fxmlLoader.load(), 350, 240);
         stage.setTitle("Test chat");
         stage.setScene(scene);
         stage.show();
         HelloController controller = fxmlLoader.getController();
+        controller.comboBox.setValue("/all");
         stage.setOnCloseRequest(event -> {
             controller.exitButtonAction();
-            System.out.println("Stage is closing");
         });
     }
 
