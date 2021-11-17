@@ -28,6 +28,7 @@ public class Server {
             e.printStackTrace();
         }
     }
+
     public BaseAuthService getBaseAuth(){
         return this.baseAuth;
     }
@@ -42,6 +43,7 @@ public class Server {
     public void subscribe(ClientHandlers client){
         clients.put(client.getNick(),client);
     }
+
     public void unsubscribe(ClientHandlers client){
         clients.remove(client.getNick());
     }
@@ -58,5 +60,13 @@ public class Server {
                 clients.get(nick).sendMessage(from+": "+message);
             }
         }
+    }
+
+    public void sendClientsNicks(){
+        StringBuilder sb = new StringBuilder("/clients ");
+        for (ClientHandlers client:clients.values()) {
+            sb.append(client.getNick()).append(" ");
+        }
+        broadcastMsg(sb.toString());
     }
 }

@@ -1,24 +1,21 @@
 package com.example.demo.server;
 
+import com.example.demo.constant.ConstantsMess;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Arrays;
 
 
-public class ClientHandlers {
-    private static final String END = "/end";
-    private static final String AUTH = "/auth";
-    private static final String LOGOUT = "/logout";
-    private static final String AUTHOK = "/authok";
-    private static final String TO = "/w";
+public class ClientHandlers extends ConstantsMess {
 
     private final Socket socket;
     private final Server server;
     private final DataInputStream in;
     private final DataOutputStream out;
     private String nickname;
+    private boolean authEnd;
 
     public ClientHandlers(Socket socket, Server server) {
         try {
@@ -27,10 +24,22 @@ public class ClientHandlers {
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            //создание потока
+            //поток подсчета времяни, отключение после 120 Сек при неподключении
+            new Thread(()->{
+                long ct = System.currentTimeMillis();
+                while (true){
+                    if (System.currentTimeMillis()-ct>120000 && !authEnd){
+                    sendMessage(AUTH_TIMEOUT);
+                    break;
+                    }
+                    if (authEnd){
+                        break;
+                    }
+                }
+            }).start();
+            //поток работы приложения
             new Thread(()->{
                 try{
-                    boolean errLunch = false;
                     authenticate();
                     readMessages();
                 } finally {
@@ -63,18 +72,21 @@ public class ClientHandlers {
                 System.out.println("Client "+this.getNick()+" logout");
                 server.unsubscribe(this);
                 socket.close();
+                server.sendClientsNicks();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        if (unsNick!=null){server.broadcastMsg(unsNick+" отключен");}
+        if (unsNick!=""){server.broadcastMsg(unsNick+" отключен");}
     }
 
     private void authenticate() {
         while (true){
             try {
-               String str = in.readUTF();
-               if(str.startsWith(AUTH)){
+                authEnd=false;
+                String str = null;
+                str = in.readUTF();
+                if(str.startsWith(AUTH)){
                    String[] split = str.split(" ");
                    String login = split[1];
                    String password = split[2];
@@ -85,10 +97,12 @@ public class ClientHandlers {
                            continue;
                        }
                        sendMessage(AUTHOK + nick);
+                       authEnd=true;
                        this.nickname=nick;
                        server.subscribe(this);
-                       System.out.println(nick+ " Login");
                        server.broadcastMsg("Пользователь "+nick+ " подключен");
+                       server.sendClientsNicks();
+                       System.out.println(nick+ " Login");
                        break;
                    }
                    else{
@@ -105,7 +119,9 @@ public class ClientHandlers {
                 e.printStackTrace();
             }
         }
+
     }
+
     public String getNick() {
         return nickname;
     }
@@ -127,6 +143,7 @@ public class ClientHandlers {
                         String unsNick = this.nickname;
                         server.unsubscribe(this);
                         server.broadcastMsg(unsNick+ " вышел");
+                        server.sendClientsNicks();
                         System.out.println(getNick() +" Logout");
                         authenticate();
                         continue;
@@ -142,7 +159,10 @@ public class ClientHandlers {
                         server.sendMessageToNick(s[1],s[2],getNick());
                         continue;
                     }
-                    server.broadcastMsg(getNick()+": "+msg);
+                    if(msg.startsWith(ALL)){
+                        final String[] s = msg.split(" ", 2);
+                    server.broadcastMsg("Всем от "+getNick()+": "+s[1]);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
