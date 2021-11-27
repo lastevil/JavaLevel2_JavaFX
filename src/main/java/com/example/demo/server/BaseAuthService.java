@@ -1,38 +1,72 @@
 package com.example.demo.server;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class BaseAuthService implements Authentication {
-    private final List<Userdata> users;
-
+private BaseSQLConnect DB;
     public BaseAuthService(){
-        users = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            users.add(new Userdata("login"+i,"pass"+i,"nick"+i));
+        try {
+            DB = new BaseSQLConnect();
+            DB.setConnection();
+            DB.createTableOfUsers();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        finally {
+            DB.disconnect();
         }
     }
-
     @Override
     public String getNickByLoginPass(String login, String password) {
-        for (Userdata user: users) {
-            if(user.login.equals(login) && user.password.equals(password)){
-                return user.nickname;
+        try {
+            DB.setConnection();
+            return DB.getNicknameByUserdata(login,password);
+        }
+        catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            DB.disconnect();
+        }
+       return null;
+    }
+    @Override
+    public boolean registration(String nickname, String login, String password) {
+        try {
+            DB.setConnection();
+            ArrayList<String> logins = DB.getLogins();
+            for (String a: logins) {
+                if(a.equals(login)){
+                    return false;
+                }
+                else {
+                    DB.userAdd(nickname,login,password);
+                    return true;
+                }
             }
+            if (logins.size()==0){
+                DB.userAdd(nickname,login,password);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
+        finally {
+            DB.disconnect();
+        }
+        return false;
     }
 
-    private static class Userdata {
-        private final String login;
-        private final String password;
-        private final String nickname;
-
-        private Userdata(String login, String password, String nickname) {
-            this.login = login;
-            this.password = password;
-            this.nickname = nickname;
+    public void nickChange(String oldNick,String newNick){
+        try {
+            DB.setConnection();
+            DB.nicknameChange(oldNick,newNick);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }finally {
+            DB.disconnect();
         }
-    }
 
+    }
 }

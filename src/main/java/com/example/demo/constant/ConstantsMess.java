@@ -9,4 +9,6 @@ public class ConstantsMess {
     public static final String AUTHOK = "/authok ";
     public static final String AUTH_TIMEOUT = "/timeout";
     public static final String CLIENTS= "/clients";
+    public static final String REG = "/reg";
+    public static final String CHN_NICK="/chn_nick";
 }

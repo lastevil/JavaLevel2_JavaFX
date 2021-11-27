@@ -25,18 +25,7 @@ public class ClientHandlers extends ConstantsMess {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
             //поток подсчета времяни, отключение после 120 Сек при неподключении
-            new Thread(()->{
-                long ct = System.currentTimeMillis();
-                while (true){
-                    if (System.currentTimeMillis()-ct>120000 && !authEnd){
-                    sendMessage(AUTH_TIMEOUT);
-                    break;
-                    }
-                    if (authEnd){
-                        break;
-                    }
-                }
-            }).start();
+
             //поток работы приложения
             new Thread(()->{
                 try{
@@ -81,45 +70,54 @@ public class ClientHandlers extends ConstantsMess {
     }
 
     private void authenticate() {
-        while (true){
+        timeOutThread();
+        while (true) {
             try {
-                authEnd=false;
+                authEnd = false;
                 String str = null;
                 str = in.readUTF();
-                if(str.startsWith(AUTH)){
-                   String[] split = str.split(" ");
-                   String login = split[1];
-                   String password = split[2];
-                   String nick = this.server.getBaseAuth().getNickByLoginPass(login, password);
-                   if (nick!=null){
-                       if (server.isNickBusy(nick)){
-                           sendMessage(nick+" уже авторизован");
-                           continue;
-                       }
-                       sendMessage(AUTHOK + nick);
-                       authEnd=true;
-                       this.nickname=nick;
-                       server.subscribe(this);
-                       server.broadcastMsg("Пользователь "+nick+ " подключен");
-                       server.sendClientsNicks();
-                       System.out.println(nick+ " Login");
-                       break;
-                   }
-                   else{
-                       sendMessage("Неверные учетные данные");
-                   }
-
-
-               }
-               if (str.startsWith(END)){
-                   sendMessage(END);
-                   break;
-               }
+                //блок регистрации
+                if (str.startsWith(REG)) {
+                    String[] split = str.split(" ");
+                    String nickname = split[1];
+                    String login = split[2];
+                    String password = split[3];
+                    if (server.getBaseAuth().registration(nickname, login, password)) {
+                        sendMessage(login + " зарегистрирован под ником " + nickname);
+                    } else sendMessage("Пользователь уже существует");
+                }
+                //блок авторизации
+                if (str.startsWith(AUTH)) {
+                    String[] split = str.split(" ");
+                    String login = split[1];
+                    String password = split[2];
+                    String nick = this.server.getBaseAuth().getNickByLoginPass(login, password);
+                    if (nick != null) {
+                        if (server.isNickBusy(nick)) {
+                            sendMessage(nick + " уже авторизован");
+                            continue;
+                        }
+                        sendMessage(AUTHOK + nick);
+                        authEnd = true;
+                        this.nickname = nick;
+                        server.subscribe(this);
+                        server.broadcastMsg("Пользователь " + nick + " подключен");
+                        server.sendClientsNicks();
+                        System.out.println(nick + " Login");
+                        break;
+                    } else {
+                        sendMessage("Неверные учетные данные");
+                    }
+                }
+                //завершение работы клиента
+                if (str.startsWith(END)) {
+                    sendMessage(END);
+                    break;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     public String getNick() {
@@ -163,9 +161,32 @@ public class ClientHandlers extends ConstantsMess {
                         final String[] s = msg.split(" ", 2);
                     server.broadcastMsg("Всем от "+getNick()+": "+s[1]);
                     }
+                    if (msg.startsWith(CHN_NICK)){
+                        String[] split = msg.split(" ");
+                        server.getBaseAuth().nickChange(this.nickname,split[1]);
+                        server.unsubscribe(this);
+                        this.nickname=split[1];
+                        server.subscribe(this);
+                        sendMessage("ник изменен на "+this.nickname);
+                        server.sendClientsNicks();
+                    }
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+    }
+
+    private void timeOutThread(){
+        new Thread(()->{
+            try {
+                Thread.sleep(120000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (!authEnd) {
+                sendMessage(AUTH_TIMEOUT);
+            }
+        }).start();
     }
 }

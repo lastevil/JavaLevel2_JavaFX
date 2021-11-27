@@ -20,20 +20,22 @@
             <MenuItem text="Logout" onAction="#menuLogout"/>
             <MenuItem text="Exit" onAction="#menuExit"/>
         </Menu>
+        <Menu text="Edit">
+            <MenuItem text="Change Nickname" onAction="#nickChange"/>
+        </Menu>
     </MenuBar>
     <padding>
         <Insets bottom="5" left="5" right="5" />
     </padding>
     <HBox  fx:id="loginForm" spacing="5" VBox.vgrow="ALWAYS">
-        <TextField fx:id="textFieldLogin" promptText="login" />
-        <PasswordField fx:id="textFieldPassword" promptText="Password"/>
-        <Button text="OK" onAction="#buttonLogin" focusTraversable="true"/>
+        <Button text="Login" onAction="#buttonLogin" focusTraversable="true" HBox.hgrow="ALWAYS"/>
+        <Button text="Register" onAction="#buttonReg" focusTraversable="true" HBox.hgrow="ALWAYS"/>
     </HBox>
     <HBox fx:id="chatForm" spacing="5" disable="true" VBox.vgrow="ALWAYS">
         <TextArea  fx:id="textArea" editable="false" VBox.vgrow="ALWAYS"/>
     </HBox>
-    <HBox fx:id="chatSendForm" spacing="5" VBox.vgrow="ALWAYS" visible="false">
-        <ComboBox fx:id="comboBox" accessibleText="/all"/>
+    <HBox fx:id="chatSendForm" spacing="5" VBox.vgrow="ALWAYS" visible="false" >
+        <ComboBox fx:id="comboBox" value="/all"/>
         <TextField fx:id="textField" HBox.hgrow="ALWAYS"/>
         <Button text="Send" onAction="#buttonClick" defaultButton="true"/>
     </HBox>

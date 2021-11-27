@@ -1,13 +1,18 @@
 package com.example.demo;
 
+import com.example.demo.constant.ConstantsMess;
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class HelloApplication extends Application {
+
+    private static HelloController controller;
+    private  Client client;
+
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
@@ -15,14 +20,18 @@ public class HelloApplication extends Application {
         stage.setTitle("Test chat");
         stage.setScene(scene);
         stage.show();
-        HelloController controller = fxmlLoader.getController();
-        controller.comboBox.setValue("/all");
+        controller = fxmlLoader.getController();
         stage.setOnCloseRequest(event -> {
             controller.exitButtonAction();
         });
-    }
+        setCombobox();
+        }
+
 
     public static void main(String[] args) {
         launch();
+    }
+    public static void setCombobox(){
+        controller.comboBox.setValue("/all");
     }
 }

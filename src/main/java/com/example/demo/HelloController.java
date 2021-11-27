@@ -1,16 +1,24 @@
 package com.example.demo;
 
 import com.example.demo.constant.ConstantsMess;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 
-
+import java.util.ArrayList;
+import java.util.Optional;
 
 public class HelloController extends ConstantsMess {
 
     private  Client client;
+    private LogDialog dialogLog;
+    private RegDialog dialogReg;
+    private ChangeNickDialog dialogNickChange;
+    private ObservableList<String> observableList;
 
     public HelloController() {
         client = new Client(this);
@@ -21,10 +29,6 @@ public class HelloController extends ConstantsMess {
     public HBox loginForm;
     @FXML
     public HBox chatForm;
-    @FXML
-    private TextField textFieldLogin;
-    @FXML
-    private TextField textFieldPassword;
     @FXML
     public ComboBox comboBox;
     @FXML
@@ -60,14 +64,12 @@ public class HelloController extends ConstantsMess {
     }
 
     public void exitButtonAction(){
-        //if (!logout){
         if (client.connectedCheck()){
             client.sendMessage(END);
         }
         if (client.connectedCheck()){
             client.sendMessage(END);
         }
-    //    }
         System.exit(0);
     }
 
@@ -76,9 +78,42 @@ public class HelloController extends ConstantsMess {
         loginForm.setDisable(false);
         chatForm.setDisable(true);
         chatSendForm.setVisible(false);
-        comboBox.setValue(null);//Не смог обойти при повторном логиине...
     }
-    public void buttonLogin(ActionEvent actionEvent) {
-        client.sendMessage(AUTH+" "+textFieldLogin.getText()+" "+textFieldPassword.getText());
+
+    @FXML
+    private void buttonLogin(ActionEvent actionEvent) {
+        dialogLog = new LogDialog();
+        dialogLog.DialogForm("Login Form");
+        Optional<String> s = dialogLog.showAndWait();
+        if (!s.isEmpty()){
+        String[] userdata = s.get().split(" ");
+        client.sendMessage(AUTH+" "+userdata[0]+" "+userdata[1]);
+       } else {
+            textArea.setText("неверные данные\n");
+       }
+    }
+
+    @FXML
+    private void buttonReg(ActionEvent actionEvent) {
+        dialogReg = new RegDialog();
+        dialogReg.DialogForm("Registration");
+        Optional<String> s = dialogReg.showAndWait();
+        if (!s.isEmpty()){
+            String[] userdata = s.get().split(" ");
+            client.sendMessage(REG+" "+userdata[0]+" "+userdata[1]+" "+userdata[2]);
+        } else {
+            textArea.setText("неверные данные\n");
+        }
+    }
+
+    public void nickChange(ActionEvent actionEvent) {
+        dialogNickChange = new ChangeNickDialog();
+        dialogNickChange.DialogForm("Nickname Change");
+        Optional<String> s = dialogNickChange.showAndWait();
+        if (!s.isEmpty()){
+            client.sendMessage(CHN_NICK+" "+s.get());
+        } else {
+            textArea.setText("Неверные данные\n");
+        }
     }
 }

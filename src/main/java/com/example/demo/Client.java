@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import static com.example.demo.HelloApplication.*;
+
 public class Client extends ConstantsMess {
     private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8189;
@@ -20,6 +22,7 @@ public class Client extends ConstantsMess {
     private DataInputStream in;
     private DataOutputStream out;
     HelloController controller;
+    private ObservableList<String> observableList = null;
 
     Client(HelloController controller){
         this.controller=controller;
@@ -44,6 +47,7 @@ public class Client extends ConstantsMess {
                             break;
                         }
                         if (strFromServer.equalsIgnoreCase(AUTH_TIMEOUT)){
+
                             controller.exitButtonAction();
                         }
                         if (strFromServer.startsWith(CLIENTS)){
@@ -53,8 +57,16 @@ public class Client extends ConstantsMess {
                             for (String s: nickList) {
                                 list.add(s);
                             }
-                            ObservableList<String> observableList = FXCollections.observableList(list);
-                            controller.comboBox.setItems(observableList);
+                            observableList = FXCollections.observableList(list);
+                            Platform.runLater(() -> {
+                                try {
+                                    controller.comboBox.setItems(observableList);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                            setCombobox();
+
                         }
                         if (strFromServer.startsWith(AUTHOK)){
                             controller.loginForm.setDisable(true);
@@ -85,5 +97,9 @@ public class Client extends ConstantsMess {
                 return true;
         }
         return false;
+    }
+
+    public ObservableList<String> getClientsList(){
+        return observableList;
     }
 }
