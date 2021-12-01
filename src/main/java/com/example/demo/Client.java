@@ -13,9 +13,11 @@ import java.util.ArrayList;
 
 import static com.example.demo.HelloApplication.*;
 
-public class Client extends ConstantsMess {
+public class Client {
     private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8189;
+    private ConstantsMess con;
+    private History history;
 
 
     private Socket socket;
@@ -43,17 +45,17 @@ public class Client extends ConstantsMess {
                 try {
                     while (true) {
                         String strFromServer = in.readUTF();
-                        if (strFromServer.equalsIgnoreCase(END)) {
+                        if (strFromServer.equalsIgnoreCase(con.END.getAttribute())) {
                             break;
                         }
-                        if (strFromServer.equalsIgnoreCase(AUTH_TIMEOUT)){
+                        if (strFromServer.equalsIgnoreCase(con.AUTH_TIMEOUT.getAttribute())){
 
                             controller.exitButtonAction();
                         }
-                        if (strFromServer.startsWith(CLIENTS)){
+                        if (strFromServer.startsWith(con.CLIENTS.getAttribute())){
                             ArrayList<String> list = new ArrayList<>();
                             String[] nickList = strFromServer.split(" ");
-                            nickList[0]=ALL;
+                            nickList[0]= con.ALL.getAttribute();
                             for (String s: nickList) {
                                 list.add(s);
                             }
@@ -61,19 +63,24 @@ public class Client extends ConstantsMess {
                             Platform.runLater(() -> {
                                 try {
                                     controller.comboBox.setItems(observableList);
+                                    setCombobox();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                             });
-                            setCombobox();
+
 
                         }
-                        if (strFromServer.startsWith(AUTHOK)){
+                        if (strFromServer.startsWith(con.AUTHOK.getAttribute())){
                             controller.loginForm.setDisable(true);
                             controller.chatForm.setDisable(false);
                             controller.chatSendForm.setVisible(true);
+                            String[] split = strFromServer.split(" ");
+                            history.setFileName(split[1]);
+                            controller.getHistory(history.readFile());
+
                         }
-                        else if (!strFromServer.startsWith(CLIENTS)){
+                        else if (!strFromServer.startsWith(con.CLIENTS.getAttribute())){
                         controller.getMessage(strFromServer);
                         }
                     }
@@ -93,13 +100,7 @@ public class Client extends ConstantsMess {
     }
 
     public boolean connectedCheck(){
-        if(socket != null && out != null && in != null){
-                return true;
-        }
-        return false;
-    }
+        return socket != null && out != null && in != null;
 
-    public ObservableList<String> getClientsList(){
-        return observableList;
     }
 }
