@@ -28,17 +28,19 @@ public class ClientHandlers {
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            //поток подсчета времяни, отключение после 120 Сек при неподключении
+
             final ExecutorService exSer = Executors.newCachedThreadPool();
+            //поток подсчета времяни, отключение после 120 Сек при неподключении
             //поток работы приложения
-            new Thread(()->{
+            exSer.execute(()->{
                 try{
                     authenticate();
                     readMessages();
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            });
+            exSer.shutdown();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
