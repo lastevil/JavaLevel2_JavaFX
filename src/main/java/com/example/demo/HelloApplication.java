@@ -12,6 +12,7 @@ public class HelloApplication extends Application {
 
     private static HelloController controller;
     private  Client client;
+    private static ConstantsMess con;
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -24,7 +25,6 @@ public class HelloApplication extends Application {
         stage.setOnCloseRequest(event -> {
             controller.exitButtonAction();
         });
-        setCombobox();
         }
 
 
@@ -32,6 +32,6 @@ public class HelloApplication extends Application {
         launch();
     }
     public static void setCombobox(){
-        controller.comboBox.setValue("/all");
+        controller.comboBox.setValue(con.ALL.getAttribute());
     }
 }

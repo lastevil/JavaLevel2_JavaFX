@@ -8,10 +8,11 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Server extends ConstantsMess {
+public class Server {
     private static final int SERVER_PORT = 8189;
     private final BaseAuthService baseAuth;
     private final Map<String, ClientHandlers> clients;
+    ConstantsMess con;
 
     public Server() {
         this.baseAuth = new BaseAuthService();
@@ -59,7 +60,7 @@ public class Server extends ConstantsMess {
         }
     }
     public void sendClientsNicks(){
-        StringBuilder sb = new StringBuilder(CLIENTS+" ");
+        StringBuilder sb = new StringBuilder(con.CLIENTS.getAttribute()+" ");
         for (ClientHandlers client:clients.values()) {
             sb.append(client.getNick()).append(" ");
         }
