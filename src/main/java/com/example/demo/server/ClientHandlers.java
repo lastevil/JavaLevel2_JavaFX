@@ -29,7 +29,7 @@ public class ClientHandlers {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            final ExecutorService exSer = Executors.newCachedThreadPool();
+            final ExecutorService exSer = Executors.newSingleThreadExecutor();
             //поток подсчета времяни, отключение после 120 Сек при неподключении
             //поток работы приложения
             exSer.execute(()->{
