@@ -13,6 +13,7 @@ public class BaseSQLConnect {
     public static void setConnection() throws SQLException{
          connection = DriverManager.getConnection("jdbc:sqlite:javadb.db");
          statement = connection.createStatement();
+         connection.setAutoCommit(true);
     }
     public static void disconnect() {
         try {
@@ -29,8 +30,7 @@ public class BaseSQLConnect {
                 "(ID integer not null primary key autoincrement,"+
                 "nickname text not null,"+
                 "login text not null unique,"+
-                "password text not null,"+
-                "auth boolean not null default false"+
+                "password text not null"+
                 ");"
         );
     }

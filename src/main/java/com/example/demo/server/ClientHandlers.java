@@ -6,9 +6,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
-public class ClientHandlers extends ConstantsMess {
+public class ClientHandlers {
 
     private final Socket socket;
     private final Server server;
@@ -16,6 +19,7 @@ public class ClientHandlers extends ConstantsMess {
     private final DataOutputStream out;
     private String nickname;
     private boolean authEnd;
+    ConstantsMess con;
 
     public ClientHandlers(Socket socket, Server server) {
         try {
@@ -24,17 +28,19 @@ public class ClientHandlers extends ConstantsMess {
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            //поток подсчета времяни, отключение после 120 Сек при неподключении
 
+            final ExecutorService exSer = Executors.newSingleThreadExecutor();
+            //поток подсчета времяни, отключение после 120 Сек при неподключении
             //поток работы приложения
-            new Thread(()->{
+            exSer.execute(()->{
                 try{
                     authenticate();
                     readMessages();
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            });
+            exSer.shutdown();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -77,7 +83,7 @@ public class ClientHandlers extends ConstantsMess {
                 String str = null;
                 str = in.readUTF();
                 //блок регистрации
-                if (str.startsWith(REG)) {
+                if (str.startsWith(con.REG.getAttribute())) {
                     String[] split = str.split(" ");
                     String nickname = split[1];
                     String login = split[2];
@@ -87,7 +93,7 @@ public class ClientHandlers extends ConstantsMess {
                     } else sendMessage("Пользователь уже существует");
                 }
                 //блок авторизации
-                if (str.startsWith(AUTH)) {
+                if (str.startsWith(con.AUTH.getAttribute())) {
                     String[] split = str.split(" ");
                     String login = split[1];
                     String password = split[2];
@@ -97,7 +103,7 @@ public class ClientHandlers extends ConstantsMess {
                             sendMessage(nick + " уже авторизован");
                             continue;
                         }
-                        sendMessage(AUTHOK + nick);
+                        sendMessage(con.AUTHOK.getAttribute() + nick);
                         authEnd = true;
                         this.nickname = nick;
                         server.subscribe(this);
@@ -110,8 +116,8 @@ public class ClientHandlers extends ConstantsMess {
                     }
                 }
                 //завершение работы клиента
-                if (str.startsWith(END)) {
-                    sendMessage(END);
+                if (str.startsWith(con.END.getAttribute())) {
+                    sendMessage(con.END.getAttribute());
                     break;
                 }
             } catch (IOException e) {
@@ -136,7 +142,7 @@ public class ClientHandlers extends ConstantsMess {
             try {
                 while (true) {
                     String msg = in.readUTF();
-                    if (msg.equals(LOGOUT)){
+                    if (msg.equals(con.LOGOUT.getAttribute())){
                         sendMessage("Вы вышли ожидание входа");
                         String unsNick = this.nickname;
                         server.unsubscribe(this);
@@ -146,22 +152,22 @@ public class ClientHandlers extends ConstantsMess {
                         authenticate();
                         continue;
                     }
-                    if (msg.equals(END)){
+                    if (msg.equals(con.END.getAttribute())){
                         sendMessage("Вы отключены от сервера");
-                        sendMessage(END);
+                        sendMessage(con.END.getAttribute());
                         break;
                     }
-                    if(msg.startsWith(TO)){
+                    if(msg.startsWith(con.TO.getAttribute())){
                        final String[] s = msg.split(" ", 3);
                         sendMessage("to " +s[1]+ ": "+s[2]);
                         server.sendMessageToNick(s[1],s[2],getNick());
                         continue;
                     }
-                    if(msg.startsWith(ALL)){
+                    if(msg.startsWith(con.ALL.getAttribute())){
                         final String[] s = msg.split(" ", 2);
                     server.broadcastMsg("Всем от "+getNick()+": "+s[1]);
                     }
-                    if (msg.startsWith(CHN_NICK)){
+                    if (msg.startsWith(con.CHN_NICK.getAttribute())){
                         String[] split = msg.split(" ");
                         server.getBaseAuth().nickChange(this.nickname,split[1]);
                         server.unsubscribe(this);
@@ -185,7 +191,7 @@ public class ClientHandlers extends ConstantsMess {
                 e.printStackTrace();
             }
             if (!authEnd) {
-                sendMessage(AUTH_TIMEOUT);
+                sendMessage(con.AUTH_TIMEOUT.getAttribute());
             }
         }).start();
     }
