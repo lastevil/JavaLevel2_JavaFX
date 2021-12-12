@@ -7,8 +7,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Server {
+
+    private static final Logger LOGGER = LogManager.getLogger(Server.class);
     private static final int SERVER_PORT = 8189;
     private final BaseAuthService baseAuth;
     private final Map<String, ClientHandlers> clients;
@@ -17,17 +23,20 @@ public class Server {
     public Server() {
         this.baseAuth = new BaseAuthService();
         this.clients = new HashMap<>();
+
     }
 
     public void Connection(){
-        System.out.println("Server STARTED");
+        LOGGER.info("Server STARTED");
+        ExecutorService ex = Executors.newCachedThreadPool();
         try(ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
             while (true){
                final Socket socket = serverSocket.accept();
-               new ClientHandlers(socket,this);
+               new ClientHandlers(socket,this,ex);
             }
 
         } catch (IOException e) {
+            LOGGER.error("Error creation of socket");
             e.printStackTrace();
         }
     }
@@ -37,6 +46,7 @@ public class Server {
     }
     public boolean isNickBusy(String nick){
             if(clients.containsKey(nick)){
+                LOGGER.warn("nickname "+nick+ " is busy");
                 return true;
             }
         return false;

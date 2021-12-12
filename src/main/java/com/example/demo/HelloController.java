@@ -57,7 +57,10 @@ public class HelloController {
 
     public void getMessage(String a){
         textArea.appendText(a+"\n");
-        history.writeFile(a);
+        if (!a.endsWith("авторизован")){
+            history.writeFile(a);
+        }
+
     }
     public void getHistory(String a){
         textArea.appendText(a+"\n");

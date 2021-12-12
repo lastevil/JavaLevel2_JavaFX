@@ -1,6 +1,8 @@
 package com.example.demo.server;
 
 import com.example.demo.constant.ConstantsMess;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -12,7 +14,7 @@ import java.util.concurrent.Executors;
 
 
 public class ClientHandlers {
-
+    private static final Logger LOGGER = LogManager.getLogger(ClientHandlers.class);
     private final Socket socket;
     private final Server server;
     private final DataInputStream in;
@@ -21,7 +23,7 @@ public class ClientHandlers {
     private boolean authEnd;
     ConstantsMess con;
 
-    public ClientHandlers(Socket socket, Server server) {
+    public ClientHandlers(Socket socket, Server server, ExecutorService exSer) {
         try {
             this.nickname = "";
             this.socket = socket;
@@ -29,7 +31,6 @@ public class ClientHandlers {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            final ExecutorService exSer = Executors.newSingleThreadExecutor();
             //поток подсчета времяни, отключение после 120 Сек при неподключении
             //поток работы приложения
             exSer.execute(()->{
@@ -40,8 +41,8 @@ public class ClientHandlers {
                     closeConnection();
                 }
             });
-            exSer.shutdown();
         } catch (IOException e) {
+            LOGGER.error("THREAD ERROR");
             throw new RuntimeException(e);
         }
     }
@@ -64,7 +65,6 @@ public class ClientHandlers {
         }
         if(socket !=null){
             try {
-                System.out.println("Client "+this.getNick()+" logout");
                 server.unsubscribe(this);
                 socket.close();
                 server.sendClientsNicks();
@@ -72,7 +72,13 @@ public class ClientHandlers {
                 e.printStackTrace();
             }
         }
-        if (unsNick!=""){server.broadcastMsg(unsNick+" отключен");}
+        if (unsNick.equals("")){
+            LOGGER.info("Clients app is closed");
+        }
+        else {
+            LOGGER.info(unsNick + " logout");
+            server.broadcastMsg(unsNick+" отключен");
+        }
     }
 
     private void authenticate() {
@@ -84,6 +90,7 @@ public class ClientHandlers {
                 str = in.readUTF();
                 //блок регистрации
                 if (str.startsWith(con.REG.getAttribute())) {
+                    LOGGER.info(this.getNick()+" send command "+con.REG);
                     String[] split = str.split(" ");
                     String nickname = split[1];
                     String login = split[2];
@@ -98,29 +105,35 @@ public class ClientHandlers {
                     String login = split[1];
                     String password = split[2];
                     String nick = this.server.getBaseAuth().getNickByLoginPass(login, password);
+                    LOGGER.info(nick+" send command "+con.AUTH);
                     if (nick != null) {
                         if (server.isNickBusy(nick)) {
                             sendMessage(nick + " уже авторизован");
                             continue;
                         }
+                        else {
                         sendMessage(con.AUTHOK.getAttribute() + nick);
                         authEnd = true;
                         this.nickname = nick;
                         server.subscribe(this);
+                        LOGGER.info(nick + " login");
                         server.broadcastMsg("Пользователь " + nick + " подключен");
                         server.sendClientsNicks();
-                        System.out.println(nick + " Login");
                         break;
+                        }
                     } else {
+                        LOGGER.warn("Error login data");
                         sendMessage("Неверные учетные данные");
                     }
                 }
                 //завершение работы клиента
                 if (str.startsWith(con.END.getAttribute())) {
+                    LOGGER.info(this.getNick()+" send command " + con.END);
                     sendMessage(con.END.getAttribute());
                     break;
                 }
             } catch (IOException e) {
+                LOGGER.error("IO Error");
                 e.printStackTrace();
             }
         }
@@ -143,31 +156,35 @@ public class ClientHandlers {
                 while (true) {
                     String msg = in.readUTF();
                     if (msg.equals(con.LOGOUT.getAttribute())){
+                        LOGGER.info(this.getNick()+" send command " + con.LOGOUT);
                         sendMessage("Вы вышли ожидание входа");
                         String unsNick = this.nickname;
                         server.unsubscribe(this);
                         server.broadcastMsg(unsNick+ " вышел");
                         server.sendClientsNicks();
-                        System.out.println(getNick() +" Logout");
                         authenticate();
                         continue;
                     }
                     if (msg.equals(con.END.getAttribute())){
+                        LOGGER.info(this.getNick()+" send command " + con.END);
                         sendMessage("Вы отключены от сервера");
                         sendMessage(con.END.getAttribute());
                         break;
                     }
                     if(msg.startsWith(con.TO.getAttribute())){
+                        LOGGER.info(this.getNick()+" send message");
                        final String[] s = msg.split(" ", 3);
                         sendMessage("to " +s[1]+ ": "+s[2]);
                         server.sendMessageToNick(s[1],s[2],getNick());
                         continue;
                     }
                     if(msg.startsWith(con.ALL.getAttribute())){
+                        LOGGER.info(this.getNick()+" send message");
                         final String[] s = msg.split(" ", 2);
-                    server.broadcastMsg("Всем от "+getNick()+": "+s[1]);
+                        server.broadcastMsg("Всем от "+getNick()+": "+s[1]);
                     }
                     if (msg.startsWith(con.CHN_NICK.getAttribute())){
+                        LOGGER.info(this.getNick()+" send command "+con.CHN_NICK);
                         String[] split = msg.split(" ");
                         server.getBaseAuth().nickChange(this.nickname,split[1]);
                         server.unsubscribe(this);
@@ -191,6 +208,7 @@ public class ClientHandlers {
                 e.printStackTrace();
             }
             if (!authEnd) {
+                LOGGER.warn("AUTH TIMEOUT");
                 sendMessage(con.AUTH_TIMEOUT.getAttribute());
             }
         }).start();
