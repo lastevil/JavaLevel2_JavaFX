@@ -1,9 +1,13 @@
 package com.example.demo.server;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
 import java.util.ArrayList;
 
 
 public class BaseSQLConnect {
+    private static final Logger LOGGER = LogManager.getLogger(BaseSQLConnect.class);
     private static Connection connection;
     private static Statement statement;
 
@@ -13,6 +17,7 @@ public class BaseSQLConnect {
     public static void setConnection() throws SQLException{
          connection = DriverManager.getConnection("jdbc:sqlite:javadb.db");
          statement = connection.createStatement();
+         connection.setAutoCommit(true);
     }
     public static void disconnect() {
         try {
@@ -20,6 +25,7 @@ public class BaseSQLConnect {
                 connection.close();
             }
         } catch (SQLException e) {
+            LOGGER.error("SQL ERROR");
             e.printStackTrace();
         }
     }
@@ -29,8 +35,7 @@ public class BaseSQLConnect {
                 "(ID integer not null primary key autoincrement,"+
                 "nickname text not null,"+
                 "login text not null unique,"+
-                "password text not null,"+
-                "auth boolean not null default false"+
+                "password text not null"+
                 ");"
         );
     }
@@ -45,6 +50,7 @@ public class BaseSQLConnect {
         ps.executeUpdate();
         }
         catch (SQLException throwables) {
+            LOGGER.error("SQL ERROR");
             throwables.printStackTrace();
         }
     }
@@ -57,6 +63,7 @@ public class BaseSQLConnect {
             ps.executeUpdate();
         }
         catch (SQLException throwables) {
+            LOGGER.error("SQL ERROR");
             throwables.printStackTrace();
         }
     }
